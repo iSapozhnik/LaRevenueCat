@@ -75,14 +75,15 @@ func routes(_ app: Application) throws {
         let formatter = NumberFormatter()
         formatter.locale = Locale.current
         formatter.numberStyle = .currency
-        
+        formatter.currencySymbol = ""
         
         return aaa.flatMap { futureLoop in
             futureLoop.map { overview in
                 let revenue = formatter.string(from: overview.revenue as NSNumber) ?? "0"
                 
                 return Frames(frames: [
-                    Frame(icon: "21787", text: "\(overview.activeUsersCount)"),
+                    Frame(icon: "42832", text: "\(overview.activeUsersCount)"),
+                    Frame(icon: "406", text: "\(overview.installsCount)"),
                     Frame(icon: "30756", text: "\(revenue)"),
 //                    Frame(icon: "401", text: "\(overview.activeSubscribersCount)"),
 //                    Frame(icon: "401", text: "\(overview.activeTrialsCount)"),
