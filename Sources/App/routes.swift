@@ -84,8 +84,8 @@ func routes(_ app: Application) throws {
                     Frame(icon: "42832", text: "\(overview.activeUsersCount)"),
                     Frame(icon: "406", text: "\(overview.installsCount)"),
                     Frame(icon: "30756", text: "\(revenue)"),
-//                    Frame(icon: "401", text: "\(overview.activeSubscribersCount)"),
-//                    Frame(icon: "401", text: "\(overview.activeTrialsCount)"),
+                    Frame(icon: "40354", text: "\(overview.activeSubscribersCount)"),
+                    Frame(icon: "41036", text: "\(overview.activeTrialsCount)"),
                 ])
             }
         }
