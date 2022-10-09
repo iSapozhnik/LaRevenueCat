@@ -1,7 +1,7 @@
 import Vapor
 import Foundation
 
-struct Frames: Codable, Content {
+struct Frames: Content {
     var frames: [Frame]
 }
 
@@ -11,12 +11,16 @@ extension Frames {
     ])
 }
 
-struct Frame: Codable, Content {
+struct Frame: Content {
     var icon: String
     var text: String
 }
 
-struct RCOverview: Codable, Content {
+struct ChuckFact: Content {
+    var value : String
+}
+
+struct RCOverview: Content {
     let activeSubscribersCount: Int
     let activeTrialsCount: Int
     let activeUsersCount: Int
@@ -104,5 +108,17 @@ func routes(_ app: Application) throws {
                 ])
             }
         }
+    }
+    
+    app.get("chuck") { req -> EventLoopFuture<Frames> in
+        req
+            .client
+            .get("https://api.chucknorris.io/jokes/random")
+            .flatMapThrowing { response in
+                try response.content.decode(ChuckFact.self)
+            }
+            .map { fact in
+                Frames(frames: [Frame(icon: "i32945", text: fact.value)])
+            }
     }
 }
