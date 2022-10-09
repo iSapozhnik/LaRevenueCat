@@ -7,11 +7,7 @@ struct Frames: Codable, Content {
 
 extension Frames {
     static let `default` = Frames(frames: [
-        Frame(icon: "42832", text: "No data"),
-        Frame(icon: "406", text: "No data"),
-        Frame(icon: "30756", text: "No data"),
-        Frame(icon: "40354", text: "No data"),
-        Frame(icon: "41036", text: "No data"),
+        Frame(icon: "42832", text: "Not authorized")
     ])
 }
 
