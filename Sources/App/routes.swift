@@ -1,7 +1,18 @@
 import Vapor
+import Foundation
 
 struct Frames: Codable, Content {
     var frames: [Frame]
+}
+
+extension Frames {
+    static let `default` = Frames(frames: [
+        Frame(icon: "42832", text: "No data"),
+        Frame(icon: "406", text: "No data"),
+        Frame(icon: "30756", text: "No data"),
+        Frame(icon: "40354", text: "No data"),
+        Frame(icon: "41036", text: "No data"),
+    ])
 }
 
 struct Frame: Codable, Content {
@@ -46,12 +57,24 @@ struct LoginResponse: Content, Codable {
     let authentication_token: String
 }
 
+let formatter: NumberFormatter = {
+    let formatter = NumberFormatter()
+    formatter.locale = Locale.current
+    formatter.numberStyle = .currency
+    formatter.currencySymbol = ""
+    return formatter
+}()
+
 func routes(_ app: Application) throws {
     app.get { req -> EventLoopFuture<Frames> in
         let auth = req.headers.basicAuthorization
+        guard let auth = auth, !auth.username.isEmpty, !auth.password.isEmpty else {
+            return req.eventLoop.makeSucceededFuture(Frames.default)
+        }
+
         var headers = HTTPHeaders()
         headers.add(name: "x-requested-with", value: "XMLHttpRequest")
-        let loginRequest = LoginRequest(email: auth?.username ?? "", password: auth?.password ?? "")
+        let loginRequest = LoginRequest(email: auth.username, password: auth.password)
 
         let loginResponse = req.client.post ("https://api.revenuecat.com/v1/developers/login", headers: headers, beforeSend: { loginReq in
             try loginReq.content.encode(loginRequest)
@@ -71,10 +94,6 @@ func routes(_ app: Application) throws {
 
             return overview
         }
-        let formatter = NumberFormatter()
-        formatter.locale = Locale.current
-        formatter.numberStyle = .currency
-        formatter.currencySymbol = ""
         
         return login.flatMap { futureLoop in
             futureLoop.map { overview in
