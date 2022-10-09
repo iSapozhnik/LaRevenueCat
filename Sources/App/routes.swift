@@ -6,8 +6,11 @@ struct Frames: Content {
 }
 
 extension Frames {
-    static let `default` = Frames(frames: [
+    static let notAuthorized = Frames(frames: [
         Frame(icon: "42832", text: "Not authorized")
+    ])
+    static let wrongCredentials = Frames(frames: [
+        Frame(icon: "42832", text: "Wrong credentials")
     ])
 }
 
@@ -69,34 +72,33 @@ func routes(_ app: Application) throws {
     app.get { req -> EventLoopFuture<Frames> in
         let auth = req.headers.basicAuthorization
         guard let auth = auth, !auth.username.isEmpty, !auth.password.isEmpty else {
-            return req.eventLoop.makeSucceededFuture(Frames.default)
+            return req.eventLoop.makeSucceededFuture(Frames.notAuthorized)
         }
-
+        
         var headers = HTTPHeaders()
         headers.add(name: "x-requested-with", value: "XMLHttpRequest")
-        let loginRequest = LoginRequest(email: auth.username, password: auth.password)
-
-        let loginResponse = req.client.post ("https://api.revenuecat.com/v1/developers/login", headers: headers, beforeSend: { loginReq in
-            try loginReq.content.encode(loginRequest)
-        })
         
-        let loginData: EventLoopFuture<LoginResponse?> = loginResponse.map { response in
-            return try? response.content.decode(LoginResponse.self)
+        return req.client.post("https://api.revenuecat.com/v1/developers/login", headers: headers, beforeSend: { loginReq in
+            let loginRequest = LoginRequest(email: auth.username, password: auth.password)
+            return try loginReq.content.encode(loginRequest)
+        })
+        .map { response in
+            try? response.content.decode(LoginResponse.self)
         }
-    
-        let login = loginData.map { res -> EventLoopFuture<RCOverview> in
+        .map { res -> EventLoopFuture<RCOverview?> in
             let authToken = res?.authentication_token ?? ""
             headers.add(name: "Cookie", value: "rc_auth_token=\(authToken)")
             let res = req.client.get("https://api.revenuecat.com/v1/developers/me/overview?app=", headers: headers)
             let overview = res.flatMapThrowing { response in
-                return try response.content.decode(RCOverview.self)
+                try? response.content.decode(RCOverview.self)
             }
-
+            
             return overview
-        }
-        
-        return login.flatMap { futureLoop in
+        }.flatMap { futureLoop in
             futureLoop.map { overview in
+                guard let overview = overview else {
+                    return Frames.wrongCredentials
+                }
                 let revenue = formatter.string(from: overview.revenue as NSNumber) ?? "0"
                 
                 return Frames(frames: [
